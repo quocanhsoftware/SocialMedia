@@ -20,7 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -30,7 +29,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.quocanh.socialmedia.MainActivity
-import com.quocanh.socialmedia.firebase.FirebaseManager
+import com.quocanh.socialmedia.controller.AuthController
 import com.quocanh.socialmedia.ui.theme.SocialMediaTheme
 
 class LoginActivity : ComponentActivity() {
@@ -39,16 +38,16 @@ class LoginActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SocialMediaTheme {
-                LoginScreen()
+                LoginScreen(onNavigateToRegister = {})
             }
         }
     }
 }
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(onNavigateToRegister: () -> Unit) {
     val context = LocalContext.current
-    val firebaseManager = remember { FirebaseManager() }
+    val authController = remember { AuthController() }
     
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -175,9 +174,9 @@ fun LoginScreen() {
                     Button(
                         onClick = {
                             isLoading = true
-                            firebaseManager.login(email, password) { success, message ->
+                            authController.login(email, password) { success, message ->
                                 isLoading = false
-                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, message ?: "Lỗi đăng nhập", Toast.LENGTH_SHORT).show()
                                 if (success) {
                                     context.startActivity(Intent(context, MainActivity::class.java))
                                     (context as? LoginActivity)?.finish()
@@ -247,7 +246,7 @@ fun LoginScreen() {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Chưa có tài khoản?", color = MaterialTheme.colorScheme.outline)
-                TextButton(onClick = { /* TODO: điều hướng đến cái đăng kí  */ }) {
+                TextButton(onClick = onNavigateToRegister) {
                     Text(
                         "Đăng ký ngay",
                         color = MaterialTheme.colorScheme.primary,
