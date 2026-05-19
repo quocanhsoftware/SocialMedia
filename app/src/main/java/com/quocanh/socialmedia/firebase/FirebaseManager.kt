@@ -1,4 +1,9 @@
 package com.quocanh.socialmedia.firebase
 
-class FirebaseManager {
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+
+object FirebaseManager {
+    val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 }
