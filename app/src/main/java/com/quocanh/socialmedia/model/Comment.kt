@@ -1,4 +1,11 @@
 package com.quocanh.socialmedia.model
 
-class Comment {
-}
+data class Comment(
+    val id: String = "",
+    val postId: String = "",
+    val userId: String = "",
+    val username: String = "",
+    val userAvatar: String = "",
+    val content: String = "",
+    val timestamp: Long = System.currentTimeMillis()
+)

@@ -38,14 +38,23 @@ class LoginActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SocialMediaTheme {
-                LoginScreen(onNavigateToRegister = {})
+                LoginScreen(
+                    onNavigateToRegister = {},
+                    onLoginSuccess = {
+                        startActivity(Intent(this, MainActivity::class.java))
+                        finish()
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun LoginScreen(onNavigateToRegister: () -> Unit) {
+fun LoginScreen(
+    onNavigateToRegister: () -> Unit,
+    onLoginSuccess: () -> Unit = {} // Thêm callback này
+) {
     val context = LocalContext.current
     val authController = remember { AuthController() }
     
@@ -178,8 +187,7 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                                 isLoading = false
                                 Toast.makeText(context, message ?: "Lỗi đăng nhập", Toast.LENGTH_SHORT).show()
                                 if (success) {
-                                    context.startActivity(Intent(context, MainActivity::class.java))
-                                    (context as? LoginActivity)?.finish()
+                                    onLoginSuccess() // Gọi hàm chuyển trang ở đây
                                 }
                             }
                         },
@@ -205,7 +213,7 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Social Login Section
+            // Social Login Section - GIỮ NGUYÊN
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
