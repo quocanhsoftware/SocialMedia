@@ -32,10 +32,12 @@ class CommentController : ViewModel() {
         FirebaseManager.firestore.collection("users").document(currentUser.uid).get()
             .addOnSuccessListener { document ->
                 val usernameFromDb = document.getString("username") ?: "Người dùng"
+                val avatarFromDb = document.getString("avatar") ?: ""
                 val comment = Comment(
                     postId = postId,
                     userId = currentUser.uid,
                     username = usernameFromDb,
+                    userAvatar = avatarFromDb,
                     content = content
                 )
                 viewModelScope.launch {
@@ -45,5 +47,22 @@ class CommentController : ViewModel() {
                     }
                 }
             }
+    }
+
+    fun updateComment(postId: String, commentId: String, newContent: String) {
+        viewModelScope.launch {
+            if (repository.updateComment(postId, commentId, newContent)) {
+                loadComments(postId)
+            }
+        }
+    }
+
+    fun deleteComment(postId: String, commentId: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            if (repository.deleteComment(postId, commentId)) {
+                loadComments(postId)
+                onComplete()
+            }
+        }
     }
 }

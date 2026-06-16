@@ -21,11 +21,61 @@ class PostRepository {
         }
     }
 
+    suspend fun getFollowingPosts(followingIds: List<String>): List<Post> {
+        if (followingIds.isEmpty()) return emptyList()
+        return try {
+            postsCollection
+                .whereIn("userId", followingIds)
+                .get()
+                .await()
+                .toObjects(Post::class.java)
+                .sortedByDescending { it.timestamp }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun getPostsByUser(userId: String): List<Post> {
+        return try {
+            postsCollection
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+                .toObjects(Post::class.java)
+                .sortedByDescending { it.timestamp }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     suspend fun createPost(post: Post): Boolean {
         return try {
             val docRef = postsCollection.document()
             val postWithId = post.copy(id = docRef.id)
             docRef.set(postWithId).await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun updatePost(postId: String, content: String, imageUrl: String): Boolean {
+        return try {
+            postsCollection.document(postId).update(
+                mapOf(
+                    "content" to content,
+                    "imageUrl" to imageUrl
+                )
+            ).await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun deletePost(postId: String): Boolean {
+        return try {
+            postsCollection.document(postId).delete().await()
             true
         } catch (e: Exception) {
             false
