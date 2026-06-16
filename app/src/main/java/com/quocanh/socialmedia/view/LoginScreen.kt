@@ -1,11 +1,6 @@
 package com.quocanh.socialmedia.view
 
-import android.content.Intent
-import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -28,24 +22,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.quocanh.socialmedia.MainActivity
 import com.quocanh.socialmedia.controller.AuthController
-import com.quocanh.socialmedia.ui.theme.SocialMediaTheme
-
-class LoginActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            SocialMediaTheme {
-                LoginScreen(onNavigateToRegister = {})
-            }
-        }
-    }
-}
 
 @Composable
-fun LoginScreen(onNavigateToRegister: () -> Unit) {
+fun LoginScreen(
+    onNavigateToRegister: () -> Unit,
+    onLoginSuccess: () -> Unit
+) {
     val context = LocalContext.current
     val authController = remember { AuthController() }
     
@@ -54,7 +37,6 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Modern gradient background
     val gradientBrush = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primaryContainer,
@@ -105,18 +87,18 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
             )
 
             Text(
-                text = "Connect with friends and the world",
+                text = "Kết nối với bạn bè và thế giới",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
             // Login Form Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
@@ -137,7 +119,11 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -157,14 +143,18 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        singleLine = true
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                        )
                     )
 
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.CenterEnd
                     ) {
-                        TextButton(onClick = { /* TODO: quên mật khẩu */ }) {
+                        TextButton(onClick = { /* TODO: Quên mật khẩu */ }) {
                             Text("Quên mật khẩu?", style = MaterialTheme.typography.labelLarge)
                         }
                     }
@@ -176,10 +166,11 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                             isLoading = true
                             authController.login(email, password) { success, message ->
                                 isLoading = false
-                                Toast.makeText(context, message ?: "Lỗi đăng nhập", Toast.LENGTH_SHORT).show()
                                 if (success) {
-                                    context.startActivity(Intent(context, MainActivity::class.java))
-                                    (context as? LoginActivity)?.finish()
+                                    Toast.makeText(context, "Chào mừng bạn quay trở lại!", Toast.LENGTH_SHORT).show()
+                                    onLoginSuccess()
+                                } else {
+                                    Toast.makeText(context, message ?: "Đăng nhập thất bại", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -203,41 +194,6 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Social Login Section
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
-                Text(
-                    text = " Hoặc ",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                SocialLoginButton(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.AccountCircle,
-                    text = "Google"
-                )
-                SocialLoginButton(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Face,
-                    text = "Facebook"
-                )
-            }
-
             Spacer(modifier = Modifier.height(40.dp))
 
             Row(
@@ -245,7 +201,7 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Chưa có tài khoản?", color = MaterialTheme.colorScheme.outline)
+                Text("Chưa có tài khoản?", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onClick = onNavigateToRegister) {
                     Text(
                         "Đăng ký ngay",
@@ -256,22 +212,6 @@ fun LoginScreen(onNavigateToRegister: () -> Unit) {
             }
             
             Spacer(modifier = Modifier.height(32.dp))
-        }
-    }
-}
-
-@Composable
-fun SocialLoginButton(modifier: Modifier = Modifier, icon: ImageVector, text: String) {
-    OutlinedButton(
-        onClick = { /* TODO: logic đăng nhập mạng xh */ },
-        modifier = modifier.height(50.dp),
-        shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
