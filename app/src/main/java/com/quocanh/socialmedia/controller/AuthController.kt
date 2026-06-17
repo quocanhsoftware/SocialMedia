@@ -56,6 +56,21 @@ class AuthController {
             }
     }
 
+    fun sendPasswordResetEmail(email: String, callback: (Boolean, String) -> Unit) {
+        if (email.isEmpty()) {
+            callback(false, "Vui lòng nhập email")
+            return
+        }
+        FirebaseManager.auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    callback(true, "Email đặt lại mật khẩu đã được gửi!")
+                } else {
+                    callback(false, task.exception?.message ?: "Gửi email thất bại")
+                }
+            }
+    }
+
     fun getCurrentUser(): FirebaseUser? {
         return FirebaseManager.auth.currentUser
     }
