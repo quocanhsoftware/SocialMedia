@@ -36,6 +36,8 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
 
     val gradientBrush = Brush.verticalGradient(
         colors = listOf(
@@ -43,6 +45,46 @@ fun LoginScreen(
             MaterialTheme.colorScheme.surface
         )
     )
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text("Quên mật khẩu?") },
+            text = {
+                Column {
+                    Text("Nhập email của bạn để nhận liên kết đặt lại mật khẩu.")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = resetEmail,
+                        onValueChange = { resetEmail = it },
+                        label = { Text("Email") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (resetEmail.isNotEmpty()) {
+                        authController.sendPasswordResetEmail(resetEmail) { success, message ->
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                            if (success) showResetDialog = false
+                        }
+                    } else {
+                        Toast.makeText(context, "Vui lòng nhập email", Toast.LENGTH_SHORT).show()
+                    }
+                }) {
+                    Text("Gửi")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -154,7 +196,10 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.CenterEnd
                     ) {
-                        TextButton(onClick = { /* TODO: Quên mật khẩu */ }) {
+                        TextButton(onClick = { 
+                            resetEmail = email
+                            showResetDialog = true 
+                        }) {
                             Text("Quên mật khẩu?", style = MaterialTheme.typography.labelLarge)
                         }
                     }
