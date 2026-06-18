@@ -29,27 +29,26 @@ class MainActivity : ComponentActivity() {
 
                 // Kiểm tra xem người dùng đã cập nhật thông tin bổ sung chưa
                 if (currentScreen == "check_info") {
-                    val currentUser = FirebaseManager.getCurrentUser()
-                    if (currentUser != null) {
-                        FirebaseManager.getUserInfo(currentUser.uid) { user ->
-                            if (user != null) {
-                                userRole = user.role
-
-                                if (user.birthday.isNotEmpty()) {
-                                    currentScreen = "home"
+                    LaunchedEffect(Unit) {
+                        val currentUser = FirebaseManager.getCurrentUser()
+                        if (currentUser != null) {
+                            FirebaseManager.getUserInfo(currentUser.uid) { user ->
+                                if (user != null) {
+                                    userRole = user.role
+                                    // Nếu đã có ngày sinh (birthday) nghĩa là đã hoàn tất hồ sơ
+                                    if (user.birthday.isNotEmpty()) {
+                                        currentScreen = "home"
+                                    } else {
+                                        currentScreen = "user_info"
+                                    }
                                 } else {
+                                    // Nếu không tìm thấy thông tin user trong Firestore, chuyển đến trang cập nhật
                                     currentScreen = "user_info"
                                 }
-
-                            // Nếu đã có ngày sinh (birthday) nghĩa là đã hoàn tất hồ sơ
-                            if (user != null && user.birthday.isNotEmpty()) {
-                                currentScreen = "home"
-                            } else {
-                                currentScreen = "user_info"
                             }
+                        } else {
+                            currentScreen = "login"
                         }
-                    } else {
-                        currentScreen = "login"
                     }
                 }
 

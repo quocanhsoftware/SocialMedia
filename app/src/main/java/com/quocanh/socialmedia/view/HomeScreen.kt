@@ -39,7 +39,6 @@ fun HomeScreen(
     onNavigateToChatList: () -> Unit,
     postController: PostController = viewModel(),
     commentController: CommentController = viewModel()
-    onNavigateToChatList: () -> Unit
 ) {
     val posts by postController.posts
     val comments by commentController.comments

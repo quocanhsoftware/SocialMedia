@@ -94,6 +94,7 @@ fun ChatDetailScreen(
                 .padding(paddingValues)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                .imePadding()
         ) {
             LazyColumn(
                 state = listState,
@@ -112,7 +113,8 @@ fun ChatDetailScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(8.dp)
+                    .navigationBarsPadding(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextField(
