@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -52,7 +53,8 @@ fun ProfileScreen(
     postController: PostController = viewModel(),
     commentController: CommentController = viewModel(),
     onBack: () -> Unit,
-    onNavigateToProfile: (String) -> Unit
+    onNavigateToProfile: (String) -> Unit,
+    onNavigateToChat: (String) -> Unit
 ) {
     var user by remember { mutableStateOf<User?>(null) }
     var currentUser by remember { mutableStateOf<User?>(null) }
@@ -184,22 +186,36 @@ fun ProfileScreen(
                                 Text("Chỉnh sửa")
                             }
                         } else {
-                            Button(
-                                onClick = {
-                                    if (isFollowing) {
-                                        FirebaseManager.unfollowUser(userId) { success -> if (success) refreshData() }
-                                    } else {
-                                        FirebaseManager.followUser(userId) { success -> if (success) refreshData() }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(0.5f),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isFollowing) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary,
-                                    contentColor = if (isFollowing) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary
-                                )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth(0.8f)
                             ) {
-                                Text(if (isFollowing) "Đang theo dõi" else "Theo dõi")
+                                Button(
+                                    onClick = {
+                                        if (isFollowing) {
+                                            FirebaseManager.unfollowUser(userId) { success -> if (success) refreshData() }
+                                        } else {
+                                            FirebaseManager.followUser(userId) { success -> if (success) refreshData() }
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isFollowing) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary,
+                                        contentColor = if (isFollowing) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary
+                                    )
+                                ) {
+                                    Text(if (isFollowing) "Đang theo dõi" else "Theo dõi")
+                                }
+                                Button(
+                                    onClick = { onNavigateToChat(userId) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(Icons.Default.ChatBubble, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Nhắn tin")
+                                }
                             }
                         }
                         

@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,7 +34,8 @@ fun HomeScreen(
     postController: PostController = viewModel(),
     commentController: CommentController = viewModel(),
     onLogout: () -> Unit,
-    onNavigateToProfile: (String) -> Unit
+    onNavigateToProfile: (String) -> Unit,
+    onNavigateToChatList: () -> Unit
 ) {
     val posts by postController.posts
     val comments by commentController.comments
@@ -108,6 +111,9 @@ fun HomeScreen(
                     } else {
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Tìm kiếm")
+                        }
+                        IconButton(onClick = onNavigateToChatList) {
+                            Icon(Icons.Default.ChatBubble, contentDescription = "Tin nhắn")
                         }
                         Box {
                             IconButton(onClick = { showMenu = true }) {
