@@ -9,6 +9,8 @@ import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -37,6 +39,7 @@ fun HomeScreen(
     onNavigateToChatList: () -> Unit,
     postController: PostController = viewModel(),
     commentController: CommentController = viewModel()
+    onNavigateToChatList: () -> Unit
 ) {
     val posts by postController.posts
     val comments by commentController.comments
@@ -113,6 +116,9 @@ fun HomeScreen(
                     } else {
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Tìm kiếm")
+                        }
+                        IconButton(onClick = onNavigateToChatList) {
+                            Icon(Icons.Default.ChatBubble, contentDescription = "Tin nhắn")
                         }
                         Box {
                             IconButton(onClick = { showMenu = true }) {

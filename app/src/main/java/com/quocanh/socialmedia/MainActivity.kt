@@ -40,6 +40,10 @@ class MainActivity : ComponentActivity() {
                                 } else {
                                     currentScreen = "user_info"
                                 }
+
+                            // Nếu đã có ngày sinh (birthday) nghĩa là đã hoàn tất hồ sơ
+                            if (user != null && user.birthday.isNotEmpty()) {
+                                currentScreen = "home"
                             } else {
                                 currentScreen = "user_info"
                             }
@@ -85,6 +89,27 @@ class MainActivity : ComponentActivity() {
                                 onBack = { currentScreen = "home" },
                                 onNavigateToProfile = { newUserId ->
                                     targetUserId = newUserId
+                                },
+                                onNavigateToChat = { otherUserId ->
+                                    chatUserId = otherUserId
+                                    currentScreen = "chat_detail"
+                                }
+                            )
+                        }
+                    }
+                    "chat_list" -> ChatListScreen(
+                        onBack = { currentScreen = "home" },
+                        onNavigateToChat = { otherUserId ->
+                            chatUserId = otherUserId
+                            currentScreen = "chat_detail"
+                        }
+                    )
+                    "chat_detail" -> {
+                        chatUserId?.let { userId ->
+                            ChatDetailScreen(
+                                otherUserId = userId,
+                                onBack = { 
+                                    currentScreen = if (targetUserId == userId) "profile" else "chat_list"
                                 }
                             )
                         }
