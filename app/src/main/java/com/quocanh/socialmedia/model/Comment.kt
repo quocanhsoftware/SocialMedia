@@ -7,5 +7,7 @@ data class Comment(
     val username: String = "",
     val userAvatar: String = "",
     val content: String = "",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    @field:JvmField
+    val isUserDisabled: Boolean = false
 )
