@@ -1,5 +1,7 @@
 package com.quocanh.socialmedia.model
 
+import com.google.firebase.firestore.PropertyName
+
 data class Post(
     val id: String = "",
     val userId: String = "",
@@ -7,8 +9,12 @@ data class Post(
     val userAvatar: String = "",
     val content: String = "",
     val imageUrl: String = "",
-    val backgroundColor: Int = 0xFFFFFFFF.toInt(), // Thêm màu nền cho bài viết
+    val backgroundColor: Int = 0xFFFFFFFF.toInt(),
     val timestamp: Long = System.currentTimeMillis(),
     val likes: List<String> = emptyList(),
-    val commentCount: Int = 0
+    val commentCount: Int = 0,
+    
+    @get:PropertyName("isUserDisabled")
+    @set:PropertyName("isUserDisabled")
+    var isUserDisabled: Boolean = false
 )

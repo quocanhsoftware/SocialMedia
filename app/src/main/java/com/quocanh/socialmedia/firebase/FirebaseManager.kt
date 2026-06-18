@@ -61,7 +61,7 @@ object FirebaseManager {
             }
     }
 
-    fun getUsers(uids: List<String>, onResult: (List<User>) -> Unit) {
+    fun getUsers(uids: List<String>, onlyActive: Boolean = true, onResult: (List<User>) -> Unit) {
         if (uids.isEmpty()) {
             onResult(emptyList())
             return
@@ -73,9 +73,12 @@ object FirebaseManager {
         var processedChunks = 0
 
         for (chunk in chunks) {
-            firestore.collection("users")
-                .whereIn("uid", chunk)
-                .get()
+            var query = firestore.collection("users").whereIn("uid", chunk)
+            if (onlyActive) {
+                query = query.whereEqualTo("isDisabled", false)
+            }
+
+            query.get()
                 .addOnSuccessListener { documents ->
                     allUsers.addAll(documents.toObjects(User::class.java))
                     processedChunks++

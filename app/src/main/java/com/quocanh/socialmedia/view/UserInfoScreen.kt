@@ -46,6 +46,9 @@ fun UserInfoScreen(
     var birthday by remember { mutableStateOf("") }
     var hometown by remember { mutableStateOf("") }
     var avatarUrl by remember { mutableStateOf("") }
+    var userRole by remember { mutableStateOf("user") }
+    var isDisabled by remember { mutableStateOf(false) }
+    
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
@@ -65,6 +68,8 @@ fun UserInfoScreen(
                     birthday = it.birthday
                     hometown = it.hometown
                     avatarUrl = it.avatar
+                    userRole = it.role
+                    isDisabled = it.isDisabled
                 }
             }
         }
@@ -101,6 +106,7 @@ fun UserInfoScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .imePadding()
                     .padding(horizontal = 24.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -239,7 +245,9 @@ fun UserInfoScreen(
                                 avatar = finalAvatarUrl,
                                 gender = gender,
                                 birthday = birthday,
-                                hometown = hometown
+                                hometown = hometown,
+                                role = userRole,
+                                isDisabled = isDisabled
                             )
                             FirebaseManager.updateUserInfo(user) { success, _ ->
                                 isLoading = false

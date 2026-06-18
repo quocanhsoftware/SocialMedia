@@ -24,17 +24,23 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(if (FirebaseManager.getCurrentUser() != null) "check_info" else "login") 
                 }
                 var targetUserId by remember { mutableStateOf<String?>(null) }
+                var userRole by remember { mutableStateOf("user") }
 
                 // Kiểm tra xem người dùng đã cập nhật thông tin bổ sung chưa
                 if (currentScreen == "check_info") {
                     val currentUser = FirebaseManager.getCurrentUser()
                     if (currentUser != null) {
                         FirebaseManager.getUserInfo(currentUser.uid) { user ->
-                            // Nếu đã có ngày sinh (birthday) nghĩa là đã hoàn tất hồ sơ
-                            if (user != null && user.birthday.isNotEmpty()) {
-                                currentScreen = "home"
+                            if (user != null) {
+                                userRole = user.role
+                                // Nếu đã có ngày sinh (birthday) nghĩa là đã hoàn tất hồ sơ
+                                if (user.birthday.isNotEmpty()) {
+                                    currentScreen = "home"
+                                } else {
+                                    // Nếu chưa có thông tin bổ sung, yêu cầu nhập
+                                    currentScreen = "user_info"
+                                }
                             } else {
-                                // Nếu chưa có thông tin bổ sung, yêu cầu nhập
                                 currentScreen = "user_info"
                             }
                         }
@@ -56,6 +62,7 @@ class MainActivity : ComponentActivity() {
                         onComplete = { currentScreen = "home" }
                     )
                     "home" -> HomeScreen(
+                        userRole = userRole,
                         onLogout = {
                             FirebaseManager.logout()
                             currentScreen = "login"
@@ -63,6 +70,9 @@ class MainActivity : ComponentActivity() {
                         onNavigateToProfile = { userId ->
                             targetUserId = userId
                             currentScreen = "profile"
+                        },
+                        onNavigateToAdmin = {
+                            currentScreen = "admin"
                         }
                     )
                     "profile" -> {
@@ -76,6 +86,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                    "admin" -> AdminScreen(
+                        onBack = { currentScreen = "home" }
+                    )
                 }
             }
         }

@@ -37,7 +37,8 @@ object CommentAdapter {
         onDismiss: () -> Unit,
         onSendComment: (String) -> Unit,
         onUpdateComment: (String, String) -> Unit = { _, _ -> },
-        onDeleteComment: (String) -> Unit = {}
+        onDeleteComment: (String) -> Unit = {},
+        isAdmin: Boolean = false
     ) {
         var editingCommentId by remember { mutableStateOf<String?>(null) }
         var editingText by remember { mutableStateOf("") }
@@ -154,7 +155,8 @@ object CommentAdapter {
                                                 editingCommentId = comment.id
                                                 editingText = comment.content
                                             },
-                                            onDelete = { onDeleteComment(comment.id) }
+                                            onDelete = { onDeleteComment(comment.id) },
+                                            isAdmin = isAdmin
                                         )
                                     }
                                 }
@@ -247,7 +249,8 @@ object CommentAdapter {
     private fun CommentItem(
         comment: Comment,
         onEdit: () -> Unit,
-        onDelete: () -> Unit
+        onDelete: () -> Unit,
+        isAdmin: Boolean = false
     ) {
         val currentUserId = FirebaseManager.getCurrentUser()?.uid
         val isOwnComment = currentUserId == comment.userId
@@ -328,6 +331,9 @@ object CommentAdapter {
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable { onEdit() }
                         )
+                    }
+
+                    if (isOwnComment || isAdmin) {
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             text = "Xóa",
