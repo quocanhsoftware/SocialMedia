@@ -34,6 +34,7 @@ fun HomeScreen(
     onLogout: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToAdmin: () -> Unit,
+    onNavigateToChatList: () -> Unit,
     postController: PostController = viewModel(),
     commentController: CommentController = viewModel()
 ) {

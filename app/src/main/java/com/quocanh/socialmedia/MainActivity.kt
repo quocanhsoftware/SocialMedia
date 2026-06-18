@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
                 }
                 var targetUserId by remember { mutableStateOf<String?>(null) }
                 var userRole by remember { mutableStateOf("user") }
+                var chatUserId by remember { mutableStateOf<String?>(null) }
 
                 // Kiểm tra xem người dùng đã cập nhật thông tin bổ sung chưa
                 if (currentScreen == "check_info") {
@@ -33,11 +34,10 @@ class MainActivity : ComponentActivity() {
                         FirebaseManager.getUserInfo(currentUser.uid) { user ->
                             if (user != null) {
                                 userRole = user.role
-                                // Nếu đã có ngày sinh (birthday) nghĩa là đã hoàn tất hồ sơ
+
                                 if (user.birthday.isNotEmpty()) {
                                     currentScreen = "home"
                                 } else {
-                                    // Nếu chưa có thông tin bổ sung, yêu cầu nhập
                                     currentScreen = "user_info"
                                 }
                             } else {
@@ -73,6 +73,9 @@ class MainActivity : ComponentActivity() {
                         },
                         onNavigateToAdmin = {
                             currentScreen = "admin"
+                        },
+                        onNavigateToChatList = {
+                            currentScreen = "chat_list"
                         }
                     )
                     "profile" -> {
