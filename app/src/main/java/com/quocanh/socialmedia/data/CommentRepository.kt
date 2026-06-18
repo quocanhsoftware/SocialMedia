@@ -49,11 +49,18 @@ class CommentRepository {
 
     suspend fun getComments(postId: String): List<Comment> {
         return try {
-            postsCollection.document(postId).collection("comments")
+            val comments = postsCollection.document(postId).collection("comments")
                 .orderBy("timestamp", Query.Direction.ASCENDING)
                 .get()
                 .await()
                 .toObjects(Comment::class.java)
+
+            // Lấy danh sách ID của những người dùng bị vô hiệu hóa (isDisabled = true)
+            val disabledUsers = db.collection("users").whereEqualTo("isDisabled", true).get().await()
+            val disabledUserIds = disabledUsers.documents.map { it.id }.toSet()
+
+            // Lọc bỏ bình luận của những người dùng có ID nằm trong danh sách bị khóa
+            comments.filter { it.userId !in disabledUserIds }
         } catch (e: Exception) {
             emptyList()
         }

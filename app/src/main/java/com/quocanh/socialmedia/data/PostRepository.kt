@@ -11,11 +11,18 @@ class PostRepository {
 
     suspend fun getPosts(): List<Post> {
         return try {
-            postsCollection
+            val allPosts = postsCollection
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .await()
                 .toObjects(Post::class.java)
+            
+            // Lấy danh sách ID của những người dùng bị vô hiệu hóa
+            val disabledUsers = db.collection("users").whereEqualTo("isDisabled", true).get().await()
+            val disabledUserIds = disabledUsers.documents.map { it.id }.toSet()
+            
+            // Chỉ lọc bỏ những bài viết của người dùng bị disable
+            allPosts.filter { it.userId !in disabledUserIds }
         } catch (e: Exception) {
             emptyList()
         }
@@ -24,12 +31,16 @@ class PostRepository {
     suspend fun getFollowingPosts(followingIds: List<String>): List<Post> {
         if (followingIds.isEmpty()) return emptyList()
         return try {
-            postsCollection
+            val allPosts = postsCollection
                 .whereIn("userId", followingIds)
                 .get()
                 .await()
                 .toObjects(Post::class.java)
-                .sortedByDescending { it.timestamp }
+            
+            val disabledUsers = db.collection("users").whereEqualTo("isDisabled", true).get().await()
+            val disabledUserIds = disabledUsers.documents.map { it.id }.toSet()
+            
+            allPosts.filter { it.userId !in disabledUserIds }.sortedByDescending { it.timestamp }
         } catch (e: Exception) {
             emptyList()
         }
@@ -37,6 +48,10 @@ class PostRepository {
 
     suspend fun getPostsByUser(userId: String): List<Post> {
         return try {
+            val userDoc = db.collection("users").document(userId).get().await()
+            val isDisabled = userDoc.getBoolean("isDisabled") ?: false
+            if (isDisabled) return emptyList()
+
             postsCollection
                 .whereEqualTo("userId", userId)
                 .get()

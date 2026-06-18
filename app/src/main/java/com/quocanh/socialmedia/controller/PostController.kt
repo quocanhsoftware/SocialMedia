@@ -8,6 +8,7 @@ import com.quocanh.socialmedia.data.PostRepository
 import com.quocanh.socialmedia.firebase.FirebaseManager
 import com.quocanh.socialmedia.model.Post
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class PostController : ViewModel() {
     private val repository = PostRepository()
@@ -20,6 +21,9 @@ class PostController : ViewModel() {
 
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
+
+    private val _isRefreshing = mutableStateOf(false)
+    val isRefreshing: State<Boolean> = _isRefreshing
 
     private var allPosts = emptyList<Post>()
     private var currentFeedType = "explore" // "explore" or "following"
@@ -34,36 +38,47 @@ class PostController : ViewModel() {
     }
 
     fun loadPosts() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            fetchData()
+            _isLoading.value = false
+        }
+    }
+
+    fun refreshPosts() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            fetchData()
+            _isRefreshing.value = false
+        }
+    }
+
+    private suspend fun fetchData() {
         if (currentFeedType == "explore") {
-            loadAllPosts()
+            allPosts = repository.getPosts()
+            _posts.value = allPosts
         } else {
-            loadFollowingPosts()
+            val currentUserId = FirebaseManager.getCurrentUser()?.uid
+            if (currentUserId != null) {
+                try {
+                    val userDoc = FirebaseManager.firestore.collection("users").document(currentUserId).get().await()
+                    val following = userDoc.get("following") as? List<String> ?: emptyList()
+                    _posts.value = repository.getFollowingPosts(following)
+                } catch (e: Exception) {
+                    _posts.value = emptyList()
+                }
+            }
         }
     }
 
     fun loadAllPosts() {
         currentFeedType = "explore"
-        viewModelScope.launch {
-            _isLoading.value = true
-            allPosts = repository.getPosts()
-            _posts.value = allPosts
-            _isLoading.value = false
-        }
+        loadPosts()
     }
 
     fun loadFollowingPosts() {
         currentFeedType = "following"
-        val currentUserId = FirebaseManager.getCurrentUser()?.uid ?: return
-        viewModelScope.launch {
-            _isLoading.value = true
-            FirebaseManager.getUserInfo(currentUserId) { user ->
-                val following = user?.following ?: emptyList()
-                viewModelScope.launch {
-                    _posts.value = repository.getFollowingPosts(following)
-                    _isLoading.value = false
-                }
-            }
-        }
+        loadPosts()
     }
 
     fun searchPosts(query: String) {

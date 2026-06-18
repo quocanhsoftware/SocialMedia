@@ -24,24 +24,31 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(if (FirebaseManager.getCurrentUser() != null) "check_info" else "login") 
                 }
                 var targetUserId by remember { mutableStateOf<String?>(null) }
+                var userRole by remember { mutableStateOf("user") }
                 var chatUserId by remember { mutableStateOf<String?>(null) }
 
                 // Kiểm tra xem người dùng đã cập nhật thông tin bổ sung chưa
                 if (currentScreen == "check_info") {
-                    val currentUser = FirebaseManager.getCurrentUser()
-                    if (currentUser != null) {
-                        FirebaseManager.getUserInfo(currentUser.uid) { user ->
-
-                            // Nếu đã có ngày sinh (birthday) nghĩa là đã hoàn tất hồ sơ
-                            if (user != null && user.birthday.isNotEmpty()) {
-                                currentScreen = "home"
-                            } else {
-                                // Nếu chưa có thông tin bổ sung, yêu cầu nhập
-                                currentScreen = "user_info"
+                    LaunchedEffect(Unit) {
+                        val currentUser = FirebaseManager.getCurrentUser()
+                        if (currentUser != null) {
+                            FirebaseManager.getUserInfo(currentUser.uid) { user ->
+                                if (user != null) {
+                                    userRole = user.role
+                                    // Nếu đã có ngày sinh (birthday) nghĩa là đã hoàn tất hồ sơ
+                                    if (user.birthday.isNotEmpty()) {
+                                        currentScreen = "home"
+                                    } else {
+                                        currentScreen = "user_info"
+                                    }
+                                } else {
+                                    // Nếu không tìm thấy thông tin user trong Firestore, chuyển đến trang cập nhật
+                                    currentScreen = "user_info"
+                                }
                             }
+                        } else {
+                            currentScreen = "login"
                         }
-                    } else {
-                        currentScreen = "login"
                     }
                 }
 
@@ -58,6 +65,7 @@ class MainActivity : ComponentActivity() {
                         onComplete = { currentScreen = "home" }
                     )
                     "home" -> HomeScreen(
+                        userRole = userRole,
                         onLogout = {
                             FirebaseManager.logout()
                             currentScreen = "login"
@@ -65,6 +73,9 @@ class MainActivity : ComponentActivity() {
                         onNavigateToProfile = { userId ->
                             targetUserId = userId
                             currentScreen = "profile"
+                        },
+                        onNavigateToAdmin = {
+                            currentScreen = "admin"
                         },
                         onNavigateToChatList = {
                             currentScreen = "chat_list"
@@ -102,6 +113,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                    "admin" -> AdminScreen(
+                        onBack = { currentScreen = "home" }
+                    )
                 }
             }
         }

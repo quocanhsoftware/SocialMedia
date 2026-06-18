@@ -4,14 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,15 +32,18 @@ import com.quocanh.socialmedia.model.Post
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    postController: PostController = viewModel(),
-    commentController: CommentController = viewModel(),
+    userRole: String = "user",
     onLogout: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
-    onNavigateToChatList: () -> Unit
+    onNavigateToAdmin: () -> Unit,
+    onNavigateToChatList: () -> Unit,
+    postController: PostController = viewModel(),
+    commentController: CommentController = viewModel()
 ) {
     val posts by postController.posts
     val comments by commentController.comments
     val isLoading by postController.isLoading
+    val isRefreshing by postController.isRefreshing
     
     var showCreatePostDialog by remember { mutableStateOf(false) }
     var editingPost by remember { mutableStateOf<Post?>(null) }
@@ -53,7 +57,7 @@ fun HomeScreen(
     var currentUserAvatar by remember { mutableStateOf("") }
     val currentUserId = FirebaseManager.getCurrentUser()?.uid
 
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -123,6 +127,16 @@ fun HomeScreen(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false }
                             ) {
+                                if (userRole == "admin") {
+                                    DropdownMenuItem(
+                                        text = { Text("Quản trị hệ thống") },
+                                        leadingIcon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = null) },
+                                        onClick = {
+                                            showMenu = false
+                                            onNavigateToAdmin()
+                                        }
+                                    )
+                                }
                                 DropdownMenuItem(
                                     text = { Text("Đăng xuất") },
                                     onClick = {
@@ -144,98 +158,104 @@ fun HomeScreen(
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { postController.refreshPosts() },
+                modifier = Modifier.fillMaxSize()
             ) {
-                item {
-                    PostAdapter.CreatePostBar(
-                        avatarUrl = currentUserAvatar,
-                        onAvatarClick = { currentUserId?.let { onNavigateToProfile(it) } },
-                        onClick = { 
-                            editingPost = null
-                            showCreatePostDialog = true 
-                        }
-                    )
-                }
-
-                item {
-                    SecondaryTabRow(
-                        selectedTabIndex = selectedTab,
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        divider = {}
-                    ) {
-                        Tab(
-                            selected = selectedTab == 0,
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                ) {
+                    item {
+                        PostAdapter.CreatePostBar(
+                            avatarUrl = currentUserAvatar,
+                            onAvatarClick = { currentUserId?.let { onNavigateToProfile(it) } },
                             onClick = { 
-                                selectedTab = 0
-                                postController.loadAllPosts()
-                            },
-                            text = { 
-                                Text(
-                                    "Khám phá", 
-                                    fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal
-                                ) 
-                            }
-                        )
-                        Tab(
-                            selected = selectedTab == 1,
-                            onClick = { 
-                                selectedTab = 1
-                                postController.loadFollowingPosts()
-                            },
-                            text = { 
-                                Text(
-                                    "Đang theo dõi", 
-                                    fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal
-                                ) 
+                                editingPost = null
+                                showCreatePostDialog = true 
                             }
                         )
                     }
-                }
 
-                if (isLoading && posts.isEmpty()) {
                     item {
-                        Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(strokeWidth = 3.dp)
-                        }
-                    }
-                } else if (posts.isEmpty()) {
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth().padding(60.dp), contentAlignment = Alignment.Center) {
-                            Text(
-                                if (selectedTab == 1) "Bạn chưa theo dõi ai hoặc họ chưa có bài đăng nào" 
-                                else "Không tìm thấy kết quả nào", 
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 32.dp)
+                        SecondaryTabRow(
+                            selectedTabIndex = selectedTab,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            divider = {}
+                        ) {
+                            Tab(
+                                selected = selectedTab == 0,
+                                onClick = { 
+                                    selectedTab = 0
+                                    postController.loadAllPosts()
+                                },
+                                text = { 
+                                    Text(
+                                        "Khám phá", 
+                                        fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal
+                                    ) 
+                                }
+                            )
+                            Tab(
+                                selected = selectedTab == 1,
+                                onClick = { 
+                                    selectedTab = 1
+                                    postController.loadFollowingPosts()
+                                },
+                                text = { 
+                                    Text(
+                                        "Đang theo dõi", 
+                                        fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal
+                                    ) 
+                                }
                             )
                         }
                     }
-                } else {
-                    items(posts, key = { it.id }) { post ->
-                        PostAdapter.PostItem(
-                            post = post,
-                            onLikeClick = { postController.toggleLike(post.id) },
-                            onCommentClick = {
-                                selectedPostId = post.id
-                                commentController.loadComments(post.id)
-                                showCommentSheet = true
-                            },
-                            onUserClick = { userId -> onNavigateToProfile(userId) },
-                            onEditClick = {
-                                editingPost = post
-                                showCreatePostDialog = true
-                            },
-                            onDeleteClick = { postController.deletePost(post.id) }
-                        )
+
+                    if (isLoading && posts.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(strokeWidth = 3.dp)
+                            }
+                        }
+                    } else if (posts.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(60.dp), contentAlignment = Alignment.Center) {
+                                Text(
+                                    if (selectedTab == 1) "Bạn chưa theo dõi ai hoặc họ chưa có bài đăng nào" 
+                                    else "Không tìm thấy kết quả nào", 
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 32.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        items(posts, key = { it.id }) { post ->
+                            PostAdapter.PostItem(
+                                post = post,
+                                onLikeClick = { postController.toggleLike(post.id) },
+                                onCommentClick = {
+                                    selectedPostId = post.id
+                                    commentController.loadComments(post.id)
+                                    showCommentSheet = true
+                                },
+                                onUserClick = { userId -> onNavigateToProfile(userId) },
+                                onEditClick = {
+                                    editingPost = post
+                                    showCreatePostDialog = true
+                                },
+                                onDeleteClick = { postController.deletePost(post.id) }
+                            )
+                        }
                     }
-                }
-                
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
 

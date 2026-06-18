@@ -94,6 +94,7 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding() // Đẩy nội dung lên khi có bàn phím
                 .padding(horizontal = 30.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
