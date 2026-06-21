@@ -74,12 +74,12 @@ class PostRepository {
         }
     }
 
-    suspend fun updatePost(postId: String, content: String, imageUrl: String): Boolean {
+    suspend fun updatePost(postId: String, content: String, imageUrls: List<String>): Boolean {
         return try {
             postsCollection.document(postId).update(
                 mapOf(
                     "content" to content,
-                    "imageUrl" to imageUrl
+                    "imageUrls" to imageUrls
                 )
             ).await()
             true

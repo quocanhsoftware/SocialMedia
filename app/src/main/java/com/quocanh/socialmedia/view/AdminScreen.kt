@@ -208,14 +208,21 @@ fun PostAdminItem(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(post.content)
-            if (post.imageUrl.isNotEmpty()) {
+            if (post.imageUrls.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 AsyncImage(
-                    model = post.imageUrl,
+                    model = post.imageUrls[0],
                     contentDescription = null,
                     modifier = Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
+                if (post.imageUrls.size > 1) {
+                    Text(
+                        text = "+${post.imageUrls.size - 1} ảnh khác",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
         }
     }
