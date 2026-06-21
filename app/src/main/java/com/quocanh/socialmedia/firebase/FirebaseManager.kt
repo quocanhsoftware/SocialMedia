@@ -187,6 +187,24 @@ object FirebaseManager {
         }
     }
 
+    fun searchUsers(query: String, onResult: (List<User>) -> Unit) {
+        if (query.isBlank()) {
+            onResult(emptyList())
+            return
+        }
+        firestore.collection("users").get()
+            .addOnSuccessListener { documents ->
+                val users = documents.toObjects(User::class.java)
+                val filtered = users.filter { 
+                    it.username.contains(query, ignoreCase = true) && !it.isDisabled
+                }
+                onResult(filtered)
+            }
+            .addOnFailureListener {
+                onResult(emptyList())
+            }
+    }
+
     fun getCurrentUser(): FirebaseUser? {
         return auth.currentUser
     }

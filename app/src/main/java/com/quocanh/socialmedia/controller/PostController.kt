@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.quocanh.socialmedia.data.PostRepository
 import com.quocanh.socialmedia.firebase.FirebaseManager
 import com.quocanh.socialmedia.model.Post
+import com.quocanh.socialmedia.model.User
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -15,6 +16,9 @@ class PostController : ViewModel() {
 
     private val _posts = mutableStateOf<List<Post>>(emptyList())
     val posts: State<List<Post>> = _posts
+
+    private val _searchedUsers = mutableStateOf<List<User>>(emptyList())
+    val searchedUsers: State<List<User>> = _searchedUsers
 
     private val _userPosts = mutableStateOf<List<Post>>(emptyList())
     val userPosts: State<List<Post>> = _userPosts
@@ -84,10 +88,16 @@ class PostController : ViewModel() {
     fun searchPosts(query: String) {
         if (query.isEmpty()) {
             _posts.value = allPosts
+            _searchedUsers.value = emptyList()
         } else {
+            // Tìm kiếm bài viết từ dữ liệu local (hoặc fetch thêm nếu cần)
             _posts.value = allPosts.filter { 
                 it.content.contains(query, ignoreCase = true) || 
                 it.username.contains(query, ignoreCase = true) 
+            }
+            // Tìm kiếm người dùng từ Firebase
+            FirebaseManager.searchUsers(query) { users ->
+                _searchedUsers.value = users
             }
         }
     }
@@ -100,7 +110,7 @@ class PostController : ViewModel() {
         }
     }
 
-    fun createPost(content: String, imageUrl: String = "") {
+    fun createPost(content: String, imageUrls: List<String> = emptyList()) {
         val currentUser = FirebaseManager.getCurrentUser() ?: return
         val randomColor = postColors.random()
 
@@ -113,7 +123,7 @@ class PostController : ViewModel() {
                     username = usernameFromDb,
                     userAvatar = userAvatar,
                     content = content,
-                    imageUrl = imageUrl,
+                    imageUrls = imageUrls,
                     backgroundColor = randomColor
                 )
                 viewModelScope.launch {
@@ -122,9 +132,9 @@ class PostController : ViewModel() {
             }
     }
 
-    fun updatePost(postId: String, content: String, imageUrl: String) {
+    fun updatePost(postId: String, content: String, imageUrls: List<String>) {
         viewModelScope.launch {
-            if (repository.updatePost(postId, content, imageUrl)) {
+            if (repository.updatePost(postId, content, imageUrls)) {
                 loadPosts()
                 val currentUserId = FirebaseManager.getCurrentUser()?.uid
                 if (currentUserId != null) loadPostsByUser(currentUserId)

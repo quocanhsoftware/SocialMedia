@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.quocanh.socialmedia.adapter.CommentAdapter
 import com.quocanh.socialmedia.adapter.PostAdapter
+import com.quocanh.socialmedia.adapter.UserAdapter
 import com.quocanh.socialmedia.controller.CommentController
 import com.quocanh.socialmedia.controller.PostController
 import com.quocanh.socialmedia.firebase.FirebaseManager
@@ -41,6 +42,7 @@ fun HomeScreen(
     commentController: CommentController = viewModel()
 ) {
     val posts by postController.posts
+    val searchedUsers by postController.searchedUsers
     val comments by commentController.comments
     val isLoading by postController.isLoading
     val isRefreshing by postController.isRefreshing
@@ -82,7 +84,7 @@ fun HomeScreen(
                                 searchQuery = it
                                 postController.searchPosts(it)
                             },
-                            placeholder = { Text("Tìm kiếm bài viết...", fontSize = 16.sp) },
+                            placeholder = { Text("Tìm kiếm bài viết, người dùng...", fontSize = 16.sp) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
@@ -168,64 +170,89 @@ fun HomeScreen(
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                 ) {
-                    item {
-                        PostAdapter.CreatePostBar(
-                            avatarUrl = currentUserAvatar,
-                            onAvatarClick = { currentUserId?.let { onNavigateToProfile(it) } },
-                            onClick = { 
-                                editingPost = null
-                                showCreatePostDialog = true 
-                            }
-                        )
-                    }
-
-                    item {
-                        SecondaryTabRow(
-                            selectedTabIndex = selectedTab,
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.primary,
-                            divider = {}
-                        ) {
-                            Tab(
-                                selected = selectedTab == 0,
+                    if (!isSearchActive) {
+                        item {
+                            PostAdapter.CreatePostBar(
+                                avatarUrl = currentUserAvatar,
+                                onAvatarClick = { currentUserId?.let { onNavigateToProfile(it) } },
                                 onClick = { 
-                                    selectedTab = 0
-                                    postController.loadAllPosts()
-                                },
-                                text = { 
-                                    Text(
-                                        "Khám phá", 
-                                        fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal
-                                    ) 
+                                    editingPost = null
+                                    showCreatePostDialog = true 
                                 }
                             )
-                            Tab(
-                                selected = selectedTab == 1,
-                                onClick = { 
-                                    selectedTab = 1
-                                    postController.loadFollowingPosts()
-                                },
-                                text = { 
-                                    Text(
-                                        "Đang theo dõi", 
-                                        fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal
-                                    ) 
-                                }
+                        }
+
+                        item {
+                            SecondaryTabRow(
+                                selectedTabIndex = selectedTab,
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.primary,
+                                divider = {}
+                            ) {
+                                Tab(
+                                    selected = selectedTab == 0,
+                                    onClick = { 
+                                        selectedTab = 0
+                                        postController.loadAllPosts()
+                                    },
+                                    text = { 
+                                        Text(
+                                            "Khám phá", 
+                                            fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal
+                                        ) 
+                                    }
+                                )
+                                Tab(
+                                    selected = selectedTab == 1,
+                                    onClick = { 
+                                        selectedTab = 1
+                                        postController.loadFollowingPosts()
+                                    },
+                                    text = { 
+                                        Text(
+                                            "Đang theo dõi", 
+                                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal
+                                        ) 
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // Hiển thị kết quả tìm kiếm người dùng
+                    if (isSearchActive && searchedUsers.isNotEmpty()) {
+                        item {
+                            Text(
+                                "Người dùng",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        items(searchedUsers, key = { it.uid }) { user ->
+                            UserAdapter.UserItem(user = user, onClick = { onNavigateToProfile(it) })
+                        }
+                        item {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant
                             )
                         }
                     }
 
-                    if (isLoading && posts.isEmpty()) {
+                    if (isLoading && posts.isEmpty() && searchedUsers.isEmpty()) {
                         item {
                             Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(strokeWidth = 3.dp)
                             }
                         }
-                    } else if (posts.isEmpty()) {
+                    } else if (posts.isEmpty() && (!isSearchActive || searchedUsers.isEmpty())) {
                         item {
                             Box(modifier = Modifier.fillMaxWidth().padding(60.dp), contentAlignment = Alignment.Center) {
                                 Text(
-                                    if (selectedTab == 1) "Bạn chưa theo dõi ai hoặc họ chưa có bài đăng nào" 
+                                    if (selectedTab == 1 && !isSearchActive) "Bạn chưa theo dõi ai hoặc họ chưa có bài đăng nào" 
                                     else "Không tìm thấy kết quả nào", 
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -234,6 +261,18 @@ fun HomeScreen(
                             }
                         }
                     } else {
+                        // Hiển thị tiêu đề bài viết nếu đang tìm kiếm
+                        if (isSearchActive && posts.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Bài viết",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                         items(posts, key = { it.id }) { post ->
                             PostAdapter.PostItem(
                                 post = post,
@@ -266,11 +305,11 @@ fun HomeScreen(
                         showCreatePostDialog = false
                         editingPost = null
                     },
-                    onConfirm = { content, imageUrl ->
+                    onConfirm = { content, imageUrls ->
                         if (editingPost != null) {
-                            postController.updatePost(editingPost!!.id, content, imageUrl)
+                            postController.updatePost(editingPost!!.id, content, imageUrls)
                         } else {
-                            postController.createPost(content, imageUrl)
+                            postController.createPost(content, imageUrls)
                         }
                         showCreatePostDialog = false
                         editingPost = null

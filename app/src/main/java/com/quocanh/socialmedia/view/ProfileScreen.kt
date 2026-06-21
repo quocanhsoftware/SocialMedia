@@ -110,11 +110,11 @@ fun ProfileScreen(
                 )
             )
         }
-    ) { padding ->
+    ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
         ) {
             item {
@@ -326,9 +326,11 @@ fun ProfileScreen(
                     showCreatePostDialog = false
                     editingPost = null
                 },
-                onConfirm = { content, imageUrl ->
+                onConfirm = { content, imageUrls ->
                     if (editingPost != null) {
-                        postController.updatePost(editingPost!!.id, content, imageUrl)
+                        postController.updatePost(editingPost!!.id, content, imageUrls)
+                    } else {
+                        postController.createPost(content, imageUrls)
                     }
                     showCreatePostDialog = false
                     editingPost = null

@@ -3,6 +3,8 @@ package com.quocanh.socialmedia.adapter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -199,7 +201,7 @@ object PostAdapter {
 
                 // Content
                 if (post.content.isNotEmpty()) {
-                    val isTextOnly = post.imageUrl.isEmpty()
+                    val isTextOnly = post.imageUrls.isEmpty()
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -219,16 +221,36 @@ object PostAdapter {
                     }
                 }
 
-                // Image
-                if (post.imageUrl.isNotEmpty()) {
-                    AsyncImage(
-                        model = post.imageUrl,
-                        contentDescription = "Post image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 500.dp),
-                        contentScale = ContentScale.FillWidth
-                    )
+                // Images
+                if (post.imageUrls.isNotEmpty()) {
+                    if (post.imageUrls.size == 1) {
+                        AsyncImage(
+                            model = post.imageUrls[0],
+                            contentDescription = "Post image",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 500.dp),
+                            contentScale = ContentScale.FillWidth
+                        )
+                    } else {
+                        LazyRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            items(post.imageUrls) { url ->
+                                AsyncImage(
+                                    model = url,
+                                    contentDescription = "Post image",
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .width(300.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // Stats

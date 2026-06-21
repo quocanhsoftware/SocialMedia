@@ -8,7 +8,7 @@ data class Post(
     val username: String = "",
     val userAvatar: String = "",
     val content: String = "",
-    val imageUrl: String = "",
+    val imageUrls: List<String> = emptyList(),
     val backgroundColor: Int = 0xFFFFFFFF.toInt(),
     val timestamp: Long = System.currentTimeMillis(),
     val likes: List<String> = emptyList(),

@@ -5,6 +5,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,10 +35,10 @@ import com.quocanh.socialmedia.utils.CloudinaryManager
 fun PostActionDialog(
     post: Post? = null,
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit
+    onConfirm: (String, List<String>) -> Unit
 ) {
     var content by remember { mutableStateOf(post?.content ?: "") }
-    var imageUrl by remember { mutableStateOf(post?.imageUrl ?: "") }
+    var imageUrls by remember { mutableStateOf(post?.imageUrls ?: emptyList<String>()) }
     var isUploading by remember { mutableStateOf(false) }
     
     var currentUserAvatar by remember { mutableStateOf("") }
@@ -54,19 +56,31 @@ fun PostActionDialog(
     }
 
     val imagePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
             isUploading = true
-            CloudinaryManager.uploadImage(it, 
-                onSuccess = { url ->
-                    imageUrl = url
-                    isUploading = false
-                },
-                onError = {
-                    isUploading = false
-                }
-            )
+            var uploadedCount = 0
+            val newUrls = imageUrls.toMutableList()
+            
+            uris.forEach { uri ->
+                CloudinaryManager.uploadImage(uri, 
+                    onSuccess = { url ->
+                        newUrls.add(url)
+                        uploadedCount++
+                        if (uploadedCount == uris.size) {
+                            imageUrls = newUrls
+                            isUploading = false
+                        }
+                    },
+                    onError = {
+                        uploadedCount++
+                        if (uploadedCount == uris.size) {
+                            isUploading = false
+                        }
+                    }
+                )
+            }
         }
     }
 
@@ -102,8 +116,8 @@ fun PostActionDialog(
                             )
                         }
                         Button(
-                            onClick = { onConfirm(content, imageUrl) },
-                            enabled = (content.isNotBlank() || imageUrl.isNotEmpty()) && !isUploading,
+                            onClick = { onConfirm(content, imageUrls) },
+                            enabled = (content.isNotBlank() || imageUrls.isNotEmpty()) && !isUploading,
                             modifier = Modifier.padding(end = 8.dp),
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
@@ -171,32 +185,40 @@ fun PostActionDialog(
                         textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
                     )
 
-                    if (imageUrl.isNotEmpty()) {
-                        Box(
+                    if (imageUrls.isNotEmpty()) {
+                        LazyRow(
                             modifier = Modifier
-                                .padding(16.dp)
                                 .fillMaxWidth()
-                                .height(300.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .height(200.dp)
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            AsyncImage(
-                                model = imageUrl,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                            IconButton(
-                                onClick = { imageUrl = "" },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(8.dp)
-                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                                    .size(32.dp)
+                            items(imageUrls) { url ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(160.dp)
+                                        .clip(RoundedCornerShape(12.dp))
                                 ) {
-                                    Icon(Icons.Default.Close, contentDescription = "Xóa ảnh", tint = Color.White, modifier = Modifier.size(16.dp))
+                                    AsyncImage(
+                                        model = url,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    IconButton(
+                                        onClick = { imageUrls = imageUrls.filter { it != url } },
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(4.dp)
+                                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                            .size(24.dp)
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = "Xóa ảnh", tint = Color.White, modifier = Modifier.size(12.dp))
+                                    }
                                 }
                             }
                         }
+                    }
                 }
             }
         }
