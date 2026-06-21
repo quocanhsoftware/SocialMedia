@@ -75,6 +75,8 @@ fun ChatListScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
+
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(conversations, key = { it["otherUserId"] as? String ?: "" }) { conv ->

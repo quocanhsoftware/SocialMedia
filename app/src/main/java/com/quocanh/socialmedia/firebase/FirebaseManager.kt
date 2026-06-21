@@ -19,8 +19,26 @@ object FirebaseManager {
     }
 
     fun sendMessage(receiverId: String, content: String, onResult: (Boolean) -> Unit) {
+        sendMediaMessage(
+            receiverId = receiverId,
+            content = content,
+            imageUrls = emptyList(),
+            fileUrl = null,
+            fileName = null,
+            onResult = onResult
+        )
+    }
+
+    fun sendMediaMessage(
+        receiverId: String,
+        content: String = "",
+        imageUrls: List<String> = emptyList(),
+        fileUrl: String? = null,
+        fileName: String? = null,
+        onResult: (Boolean) -> Unit
+    ) {
         val senderId = auth.currentUser?.uid ?: return onResult(false)
-        if (content.isEmpty()) return onResult(false)
+        if (content.isEmpty() && imageUrls.isEmpty() && fileUrl == null) return onResult(false)
 
         val conversationId = getConversationId(senderId, receiverId)
         val conversationDocRef = firestore.collection("conversations").document(conversationId)
@@ -32,16 +50,26 @@ object FirebaseManager {
             senderId = senderId,
             receiverId = receiverId,
             content = content,
+            imageUrls = imageUrls,
+            fileUrl = fileUrl,
+            fileName = fileName,
             timestamp = timestamp
         )
 
         val batch = firestore.batch()
         batch.set(conversationDocRef.collection("messages").document(messageId), message)
+        
+        val lastMessageText = when {
+            imageUrls.isNotEmpty() -> "Đã gửi ${imageUrls.size} ảnh"
+            fileUrl != null -> "Đã gửi file: $fileName"
+            else -> content
+        }
+        
         batch.set(
             conversationDocRef,
             mapOf(
                 "participants" to listOf(senderId, receiverId),
-                "lastMessage" to content,
+                "lastMessage" to lastMessageText,
                 "lastTimestamp" to timestamp,
                 "lastSenderId" to senderId
             ),

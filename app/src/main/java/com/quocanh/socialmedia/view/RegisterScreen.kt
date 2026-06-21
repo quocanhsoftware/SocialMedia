@@ -195,17 +195,34 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
+            // Fancy Login Button
+            Card(
+                onClick = onNavigateToLogin,
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Text("Đã có tài khoản?", color = MaterialTheme.colorScheme.outline)
-                TextButton(onClick = onNavigateToLogin) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Login,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        "Đăng nhập ngay",
+                        text = "ĐĂNG NHẬP VÀO TÀI KHOẢN",
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 14.sp
                     )
                 }
             }
